@@ -328,13 +328,13 @@
 
 ; iterative
 (define (f n)
-  (define f-iter a b c count)
+  (define (f-iter a b c count)
     if (count < 3)
       a
       (f_iter (+ a (* 2 b) (*3 c)) a b (- count 1))
   if (n < 3)
     n
-    (f-iter 2 1 0 n))
+    (f-iter 2 1 0 n)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -460,3 +460,89 @@
 (smallest-divisor 199)
 (smallest-divisor 1999)
 (smallest-divisor 19999)
+
+
+
+; Exercise 1.22.  Most Lisp implementations include a primitive called runtime
+; that returns an integer that specifies the amount of time the system has been
+; running (measured, for example, in microseconds). The following timed-prime-test
+; procedure, when called with an integer n, prints n and checks to see if n is
+; prime. If n is prime, the procedure prints three asterisks followed by the
+; amount of time used in performing the test.
+
+(define (timed-prime-test n)
+  (start-prime-test n (runtime)))
+(define (start-prime-test n start-time)
+  (if (prime? n)
+      (report-prime n (- (runtime) start-time))))
+(define (report-prime n elapsed-time)
+  (newline)
+  (display n)
+  (display " *** ")
+  (display elapsed-time))
+(define (prime? n)
+  (= n (smallest-divisor n)))
+
+; Using this procedure, write a procedure search-for-primes that checks the
+; primality of consecutive odd integers in a specified range. Use your procedure
+; to find the three smallest primes larger than 1000; larger than 10,000; larger
+; than 100,000; larger than 1,000,000. Note the time needed to test each prime.
+; Since the testing algorithm has order of growth of (n), you should expect that
+; testing for primes around 10,000 should take about 10 times as long as testing
+; for primes around 1000. Do your timing data bear this out? How well do the data
+; for 100,000 and 1,000,000 support the n prediction? Is your result compatible
+; with the notion that programs on your machine run in time proportional to the
+; number of steps required for the computation?
+
+(define (search-for-primes a b)
+  (cond ((and (<= a b) (even? a))
+           (search-for-primes (+ a 1) b))
+        ((and (<= a b) (odd? a))
+           (timed-prime-test a)
+           (search-for-primes (+ a 1) b))))
+         
+(search-for-primes 1000000000 1000000021)       ; 1e9 
+(search-for-primes 10000000000 10000000061)     ; 1e10 
+(search-for-primes 100000000000 100000000057)   ; 1e11 
+(search-for-primes 1000000000000 1000000000063) ; 1e12 
+; Increases are roughly 3x ~ 10^0.5
+
+
+; Exercise 1.23.  The smallest-divisor procedure shown at the start of this
+; section does lots of needless testing: After it checks to see if the number is
+; divisible by 2 there is no point in checking to see if it is divisible by any
+; larger even numbers. This suggests that the values used for test-divisor should
+; not be 2, 3, 4, 5, 6, ..., but rather 2, 3, 5, 7, 9, .... To implement this
+; change, define a procedure next that returns 3 if its input is equal to 2 and
+; otherwise returns its input plus 2. Modify the smallest-divisor procedure to use
+; (next test-divisor) instead of (+ test-divisor 1). With timed-prime-test
+; incorporating this modified version of smallest-divisor, run the test for each
+; of the 12 primes found in exercise 1.22. Since this modification halves the
+; number of test steps, you should expect it to run about twice as fast. Is this
+; expectation confirmed? If not, what is the observed ratio of the speeds of the
+; two algorithms, and how do you explain the fact that it is different from 2?
+
+(define (next i)
+  (if (= i 2)
+    3
+    (+ i 2)))
+
+(define (find-divisor n test-divisor)
+  (cond ((> (square test-divisor) n) n)
+        ((divides? test-divisor n) test-divisor)
+        (else (find-divisor n (next test-divisor)))))
+
+(timed-prime-test 1009) 
+(timed-prime-test 1013) 
+(timed-prime-test 1019) 
+(timed-prime-test 10007) 
+(timed-prime-test 10009) 
+(timed-prime-test 10037) 
+(timed-prime-test 100003) 
+(timed-prime-test 100019) 
+(timed-prime-test 100043) 
+(timed-prime-test 1000003) 
+(timed-prime-test 1000033) 
+(timed-prime-test 1000037)
+
+; Close to two, but not exact due to overhead of additional function call.
